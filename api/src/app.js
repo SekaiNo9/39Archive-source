@@ -5,9 +5,12 @@ const path = require('path');
 
 const PORT = process.env.PORT;
 const FE_PORT = process.env.FE_PORT;
+const FRONTEND_URL = process.env.FRONTEND_URL; // e.g., https://your-frontend.vercel.app
 
 // Middleware
-app.use(cors({ origin: `http://localhost:${FE_PORT}`,credentials: true }));
+// Allow FE localhost during dev, or FRONTEND_URL in production
+const allowedOrigin = FRONTEND_URL || (FE_PORT ? `http://localhost:${FE_PORT}` : 'http://localhost:3000');
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
 
 // Cookie parser phải được đặt trước khi sử dụng routes
