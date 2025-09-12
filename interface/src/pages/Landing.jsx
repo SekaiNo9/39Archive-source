@@ -76,7 +76,7 @@ export default function Landing() {
           </button>
           
           <button
-            onClick={() => window.open('https://github.com/temp-placeholder', '_blank')}
+            onClick={() => window.open('https://github.com/SekaiNo9/39Archive-source/tree/main')}
             className="group relative overflow-hidden bg-transparent border-2 border-white/50 text-white px-10 py-4 rounded-full shadow-lg hover:shadow-white/20 transition-all duration-300 font-medium text-lg hover-lift transform hover:scale-105 backdrop-blur-sm"
           >
             <span className="relative z-10 flex items-center gap-2">
