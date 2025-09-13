@@ -87,7 +87,7 @@ export default function SongCollection({ user, setUser }) {
             🎵 Bộ sưu tập bài hát
           </h2>
           <p className="text-lg text-miku-darkCyan opacity-80 mb-2">
-            Khám phá {songs.length} bài hát tuyệt vời
+            Tìm thấy {songs.length} bài hát tuyệt vời
           </p>
           <div className="w-24 h-1 bg-gradient-aqua mx-auto rounded-full"></div>
         </div>
