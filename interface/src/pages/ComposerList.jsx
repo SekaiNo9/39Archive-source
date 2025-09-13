@@ -24,10 +24,10 @@ const ComposerList = ({ user }) => {
       {/* Header */}
       <div className="text-center mb-12">
         <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4 animate-glow">
-          🎼 Danh sách Composer
+          🎼 Danh sách Producer
         </h2>
         <p className="text-lg text-miku-darkCyan opacity-80 mb-2">
-          Khám phá {composers.length} nhạc sĩ tài năng
+          Khám phá {composers.length} nhà sáng tác tài năng
         </p>
         <div className="w-24 h-1 bg-gradient-aqua mx-auto rounded-full"></div>
       </div>

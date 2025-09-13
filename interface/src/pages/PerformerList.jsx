@@ -23,10 +23,10 @@ const PerformerList = ({ user }) => {
       {/* Header */}
       <div className="text-center mb-12">
         <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4 animate-glow">
-          🎤 Danh sách V-Singer
+          🎤 Danh sách Visual Singer
         </h2>
         <p className="text-lg text-miku-darkCyan opacity-80 mb-2">
-          Khám phá {performers.length} nghệ sĩ ảo tài năng
+          Khám phá {performers.length} nghệ sĩ ảo 
         </p>
         <div className="w-24 h-1 bg-gradient-aqua mx-auto rounded-full"></div>
       </div>

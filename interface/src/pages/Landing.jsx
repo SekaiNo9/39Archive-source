@@ -60,7 +60,7 @@ export default function Landing() {
         </p>
         
         <p className="text-base md:text-lg lg:text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed drop-shadow-sm italic">
-          "Hi vọng bạn sẽ tìm thấy cho mình một khoảng lặng thanh thản trong cái thế giới đầy sôi động này"
+          "Hi vọng bạn sẽ tìm thấy cho mình một khoảng lặng thanh bình trong cái thế giới đầy sôi động này!"
         </p>
 
         {/* Call to action buttons */}
