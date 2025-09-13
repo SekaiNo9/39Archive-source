@@ -183,10 +183,6 @@ const MyArchive = ({ user, setUser }) => {
           Chào mừng trở lại, <span className="font-semibold text-miku-cyan">{userData.username}</span>!
           {userData.role === 'admin' && <span className="ml-2 px-2 py-1 bg-red-100 text-red-600 text-sm rounded-full">Admin</span>}
         </p>
-        {/* Debug: Hiển thị thông tin user để kiểm tra */}
-        <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
-          DEBUG: Role = "{userData.role}" | User ID = {userData._id}
-        </div>
         <div className="w-24 h-1 bg-gradient-aqua mx-auto rounded-full mt-4"></div>
       </div>
 
