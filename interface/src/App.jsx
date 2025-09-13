@@ -50,6 +50,13 @@ export default function App() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // Skip auto-fetch nếu đang ở trang login để tránh conflict
+        const currentPath = window.location.pathname;
+        if (currentPath === '/login' || currentPath === '/register') {
+          setLoading(false);
+          return;
+        }
+        
         setLoading(true);
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/account/me`, {
           withCredentials: true
