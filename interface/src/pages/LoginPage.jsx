@@ -21,6 +21,9 @@ export default function LoginPage({ setUser }) {
     setToast("");
 
     try {
+      // Clear user state trước khi login để tránh conflict
+      setUser(null);
+      
       // Login
       await axios.post(`${base}/account/login`, form, { withCredentials: true });
 
