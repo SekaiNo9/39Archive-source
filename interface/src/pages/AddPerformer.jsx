@@ -12,8 +12,8 @@ const AddPerformerPage = () => {
     birthday: '',
     symbol: '',
     debut_day: '',
-    description: '',
-    detail_info: '',
+    description: 'Đang được cập nhập...',
+    detail_info: 'Đang được cập nhập...',
     url_avt: null,
   });
   const [error, setError] = useState('');

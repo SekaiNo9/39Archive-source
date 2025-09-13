@@ -72,7 +72,7 @@ export default function Topbar({ user, setUser }) {
       <div className="bg-aqua flex items-center justify-center py-4 md:py-6 lg:py-10">
         <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
           <img
-            src={`${base}/uploads/avt/icon_miku.jpg`}
+            src="/icon_miku.jpg"
             alt="icon"
             className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-cover rounded-md"
           />

@@ -73,7 +73,7 @@ const PlaylistTile = ({ playlist, user, onLikeUpdate, showControls = true }) => 
     }
     
     // Default playlist cover
-    return '/default.png';
+    return '/default1.png';
   };
 
   const isOwner = user && playlist.author && 
@@ -91,7 +91,7 @@ const PlaylistTile = ({ playlist, user, onLikeUpdate, showControls = true }) => 
           alt={playlist.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {
-            e.target.src = '/default.png';
+            e.target.src = '/default1.png';
           }}
         />
         

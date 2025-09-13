@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
+import JSZip from 'jszip';
 
 const SongUpload = () => {
   const [form, setForm] = useState({
     title: '',
     duration: '',
-    description: '',
-    composers: ['unknown'],     // Mặc định là unknown
-    performers: ['unknown'],    // Mặc định là unknown
+    description: 'Đang được cập nhập...',
+    composers: [],     // Mặc định là mảng rỗng
+    performers: [],    // Mặc định là mảng rỗng
     language: '',
     release_date: '',
     mv_link: '',
@@ -23,6 +24,7 @@ const SongUpload = () => {
   const [coverPreview, setCoverPreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAudio, setSelectedAudio] = useState(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,9 +55,12 @@ const SongUpload = () => {
       
       // Lưu thông tin file audio
       if (name === 'url_song' && file && file.type.startsWith('audio/')) {
+        const fileSizeMB = file.size / (1024 * 1024);
         setSelectedAudio({
           name: file.name,
-          size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+          size: fileSizeMB.toFixed(2) + ' MB',
+          needsCompression: fileSizeMB > 4, // Cần nén nếu > 4MB
+          originalFile: file
         });
       }
     } else {
@@ -66,37 +71,63 @@ const SongUpload = () => {
   // Handle multi-select for composers
   const handleComposerChange = (e) => {
     const { value, checked } = e.target;
-    setForm(prev => ({
-      ...prev,
-      composers: checked 
-        ? [...prev.composers.filter(id => id !== 'unknown'), value] // Remove unknown if selecting others
-        : prev.composers.filter(id => id !== value)
-    }));
+    
+    if (value === 'unknown') {
+      if (checked) {
+        // Nếu chọn Unknown, xóa tất cả composer khác và chỉ để Unknown
+        setForm(prev => ({ ...prev, composers: ['unknown'] }));
+      } else {
+        // Nếu bỏ chọn Unknown, để mảng rỗng
+        setForm(prev => ({ ...prev, composers: [] }));
+      }
+    } else {
+      // Nếu chọn composer thật, xóa Unknown và thêm/xóa composer
+      setForm(prev => ({
+        ...prev,
+        composers: checked 
+          ? [...prev.composers.filter(id => id !== 'unknown'), value]
+          : prev.composers.filter(id => id !== value)
+      }));
+    }
   };
 
   // Handle multi-select for performers
   const handlePerformerChange = (e) => {
     const { value, checked } = e.target;
-    setForm(prev => ({
-      ...prev,
-      performers: checked 
-        ? [...prev.performers.filter(id => id !== 'unknown'), value] // Remove unknown if selecting others
-        : prev.performers.filter(id => id !== value)
-    }));
-  };
-
-  // Reset to unknown if no composer selected
-  const resetToUnknownComposer = () => {
-    if (form.composers.length === 0) {
-      setForm(prev => ({ ...prev, composers: ['unknown'] }));
+    
+    if (value === 'unknown') {
+      if (checked) {
+        // Nếu chọn Unknown, xóa tất cả performer khác và chỉ để Unknown
+        setForm(prev => ({ ...prev, performers: ['unknown'] }));
+      } else {
+        // Nếu bỏ chọn Unknown, để mảng rỗng
+        setForm(prev => ({ ...prev, performers: [] }));
+      }
+    } else {
+      // Nếu chọn performer thật, xóa Unknown và thêm/xóa performer
+      setForm(prev => ({
+        ...prev,
+        performers: checked 
+          ? [...prev.performers.filter(id => id !== 'unknown'), value]
+          : prev.performers.filter(id => id !== value)
+      }));
     }
   };
 
-  // Reset to unknown if no performer selected
-  const resetToUnknownPerformer = () => {
-    if (form.performers.length === 0) {
-      setForm(prev => ({ ...prev, performers: ['unknown'] }));
-    }
+  // Không cần reset về 'unknown', chỉ giữ mảng rỗng nếu không chọn ai
+
+  // Hàm nén file audio thành zip
+  const compressAudioFile = async (audioFile) => {
+    const zip = new JSZip();
+    zip.file(audioFile.name, audioFile);
+    
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 9 } // Nén tối đa
+    });
+    
+    return new File([zipBlob], `${audioFile.name}.zip`, { type: 'application/zip' });
   };
 
   const handleSubmit = async e => {
@@ -115,17 +146,44 @@ const SongUpload = () => {
     }
 
     const data = new FormData();
+    
+    // Xử lý file audio: nén nếu cần
+    let songFileToUpload = form.url_song;
+    if (selectedAudio?.needsCompression) {
+      setIsCompressing(true);
+      try {
+        songFileToUpload = await compressAudioFile(form.url_song);
+        setToast('File đã được nén để tối ưu upload...');
+      } catch (compressError) {
+        setError('Lỗi khi nén file: ' + compressError.message);
+        setIsLoading(false);
+        setIsCompressing(false);
+        return;
+      }
+      setIsCompressing(false);
+    }
+
     Object.entries(form).forEach(([key, value]) => {
       if (key === 'url_cover' && value) {
         const ext = value.name.split('.').pop();
         const newFile = new File([value], `${form.title}-cover.${ext}`, { type: value.type });
         data.append(key, newFile);
       } else if (key === 'url_song' && value) {
-        const ext = value.name.split('.').pop();
-        const newFile = new File([value], `${form.title}-audio.${ext}`, { type: value.type });
-        data.append(key, newFile);
+        // Sử dụng file đã được nén (nếu cần) hoặc file gốc
+        if (selectedAudio?.needsCompression) {
+          data.append(key, songFileToUpload);
+        } else {
+          const ext = value.name.split('.').pop();
+          const newFile = new File([value], `${form.title}-audio.${ext}`, { type: value.type });
+          data.append(key, newFile);
+        }
       } else if (Array.isArray(value)) {
-        value.forEach(v => data.append(key, v)); // append từng phần tử _id
+        // Nếu là mảng chứa 'unknown', gửi mảng rỗng
+        if (value.includes('unknown')) {
+          // Không append gì cả, để server nhận mảng rỗng
+        } else {
+          value.forEach(v => data.append(key, v)); // append từng phần tử _id
+        }
       } else {
         data.append(key, value);
       }
@@ -141,9 +199,9 @@ const SongUpload = () => {
       setForm({
         title: '',
         duration: '',
-        description: '',
-        composers: ['unknown'],
-        performers: ['unknown'],
+        description: 'Đang được cập nhập...',
+        composers: [],     // Reset về mảng rỗng
+        performers: [],    // Reset về mảng rỗng
         language: '',
         release_date: '',
         mv_link: '',
@@ -300,7 +358,7 @@ const SongUpload = () => {
                         onChange={handleComposerChange}
                         className="rounded text-aqua-500 focus:ring-aqua-400"
                       />
-                      <span className="text-sm font-medium text-gray-700">Unknown (mặc định)</span>
+                      <span className="text-sm font-medium text-gray-700">Unknown</span>
                     </label>
                     {composerList.map(composer => (
                       <label key={composer._id} className="flex items-center space-x-2">
@@ -309,7 +367,6 @@ const SongUpload = () => {
                           value={composer._id}
                           checked={form.composers.includes(composer._id)}
                           onChange={handleComposerChange}
-                          onBlur={resetToUnknownComposer}
                           className="rounded text-aqua-500 focus:ring-aqua-400"
                         />
                         <span className="text-sm text-gray-700">{composer.nick_name}</span>
@@ -336,7 +393,7 @@ const SongUpload = () => {
                         onChange={handlePerformerChange}
                         className="rounded text-aqua-500 focus:ring-aqua-400"
                       />
-                      <span className="text-sm font-medium text-gray-700">Unknown (mặc định)</span>
+                      <span className="text-sm font-medium text-gray-700">Unknown</span>
                     </label>
                     {performerList.map(performer => (
                       <label key={performer._id} className="flex items-center space-x-2">
@@ -345,7 +402,6 @@ const SongUpload = () => {
                           value={performer._id}
                           checked={form.performers.includes(performer._id)}
                           onChange={handlePerformerChange}
-                          onBlur={resetToUnknownPerformer}
                           className="rounded text-aqua-500 focus:ring-aqua-400"
                         />
                         <span className="text-sm text-gray-700">{performer.nick_name}</span>
@@ -390,7 +446,16 @@ const SongUpload = () => {
                   className="w-full border-2 border-gray-800 rounded-lg px-4 py-3 bg-white focus:outline-none focus:ring-2 focus:ring-aqua-400 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-aqua-50 file:text-miku-darkCyan hover:file:bg-aqua-100"
                   required 
                 />
-                <p className="text-xs text-miku-darkCyan opacity-70 mt-1">MP3, WAV (tối đa 10MB)</p>
+                <p className="text-xs text-miku-darkCyan opacity-70 mt-1">
+                  MP3, WAV (file &gt; 4MB sẽ được tự động nén để tối ưu upload)
+                </p>
+                {selectedAudio?.needsCompression && (
+                  <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
+                    <p className="text-xs text-yellow-800">
+                      ⚠️ File lớn hơn 4MB - sẽ được nén tự động khi upload
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -428,6 +493,11 @@ const SongUpload = () => {
                       <div className="text-4xl mb-2">🎵</div>
                       <p className="text-sm font-medium text-miku-darkCyan">{selectedAudio.name}</p>
                       <p className="text-xs text-miku-darkCyan opacity-70">Kích thước: {selectedAudio.size}</p>
+                      {selectedAudio.needsCompression && (
+                        <p className="text-xs text-yellow-700 font-medium mt-1">
+                          🗜️ Sẽ nén khi upload
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center text-miku-darkCyan opacity-50">
@@ -453,7 +523,9 @@ const SongUpload = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-3">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Đang upload bài hát...</span>
+                    <span>
+                      {isCompressing ? 'Đang nén file...' : 'Đang upload bài hát...'}
+                    </span>
                   </div>
                 ) : (
                   <>🚀 Upload Bài Hát</>

@@ -203,9 +203,9 @@ export default function SongPage({ user, setUser }) {
                   <span className="text-2xl">🎼</span>
                   <span className="font-semibold text-miku-darkCyan">Composer:</span>
                   <span className="text-miku-deep">
-                    {Array.isArray(song.composers)
+                    {Array.isArray(song.composers) && song.composers.length > 0
                       ? song.composers.map((c) => c.nick_name || c).join(', ')
-                      : song.composers}
+                      : 'Unknown'}
                   </span>
                 </p>
                 
@@ -213,9 +213,9 @@ export default function SongPage({ user, setUser }) {
                   <span className="text-2xl">🎤</span>
                   <span className="font-semibold text-miku-darkCyan">Performer:</span>
                   <span className="text-miku-deep">
-                    {Array.isArray(song.performers)
+                    {Array.isArray(song.performers) && song.performers.length > 0
                       ? song.performers.map((p) => p.nick_name || p).join(', ')
-                      : song.performers}
+                      : 'Unknown'}
                   </span>
                 </p>
                 

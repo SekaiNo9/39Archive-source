@@ -22,7 +22,7 @@ export default function Landing() {
         <div className="mb-8 flex justify-center">
           <div className="relative">
             <img
-              src={`${base}/uploads/avt/icon_miku.jpg`}
+              src="/icon_miku.jpg"
               alt="Miku Icon"
               className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-white/30 shadow-2xl animate-pulse-soft hover-lift"
             />
@@ -37,7 +37,7 @@ export default function Landing() {
               <span 
                 key={index} 
                 className="inline-block animate-wave"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                style={{ animationDelay: (index * 0.1) + 's' }}
               >
                 {char}
               </span>
@@ -76,7 +76,7 @@ export default function Landing() {
           </button>
           
           <button
-            onClick={() => window.open('https://github.com/temp-placeholder', '_blank')}
+            onClick={() => window.open('https://github.com/SekaiNo9/39Archive-source', '_blank', 'noopener,noreferrer')}
             className="group relative overflow-hidden bg-transparent border-2 border-white/50 text-white px-10 py-4 rounded-full shadow-lg hover:shadow-white/20 transition-all duration-300 font-medium text-lg hover-lift transform hover:scale-105 backdrop-blur-sm"
           >
             <span className="relative z-10 flex items-center gap-2">
@@ -88,13 +88,6 @@ export default function Landing() {
 
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/60 animate-bounce">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-sm">Cuộn để khám phá</span>
-          <div className="w-1 h-6 bg-white/40 rounded-full"></div>
-        </div>
-      </div>
     </div>
   );
 }

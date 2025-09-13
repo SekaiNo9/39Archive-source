@@ -7,7 +7,7 @@ const AddComposerPage = () => {
   const [form, setForm] = useState({ 
     nick_name: '',
     country: '',
-    description: '',
+    description: 'Đang được cập nhập...',
     social_link: '',
     url_avt: null,
   }); 
