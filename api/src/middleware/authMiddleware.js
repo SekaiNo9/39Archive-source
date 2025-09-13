@@ -14,6 +14,7 @@ const auth = (req, res, next) => {
     const token = req.cookies?.token || req.header('Authorization')?.replace('Bearer ', '');
     
     console.log('🔍 Token found:', !!token);
+    console.log('🔍 Token value (first 20 chars):', token ? token.substring(0, 20) + '...' : 'none');
     
     if (!token) {
       return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
@@ -23,6 +24,8 @@ const auth = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
     
     console.log('🔍 Token decoded:', { userId: decoded.userId, role: decoded.role });
+    console.log('🔍 Token issued at:', new Date(decoded.iat * 1000));
+    console.log('🔍 Token expires at:', new Date(decoded.exp * 1000));
     
     // Đây là dòng quan trọng - đảm bảo userId và role được lưu đúng vào req
     req.userId = decoded.userId;

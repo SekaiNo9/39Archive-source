@@ -137,14 +137,20 @@ const register = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
+    // Debug: Log what we received from middleware
+    console.log('🔍 getMe - req.userId:', req.userId);
+    console.log('🔍 getMe - req.userRole:', req.userRole);
+    
     // userId đã được set bởi middleware auth
     const user = await Account.findById(req.userId).select('-password');
+    
+    console.log('🔍 getMe - Found user:', user ? user.login_name : 'null');
     
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
     }
 
-    res.json({
+    const responseData = {
       account: {
         _id: user._id,
         login_name: user.login_name,
@@ -155,8 +161,13 @@ const getMe = async (req, res) => {
         favSong: user.favSong || [],
         latedSong: user.latedSong || []
       }
-    });
+    };
+    
+    console.log('🔍 getMe - Returning user:', responseData.account.login_name);
+    
+    res.json(responseData);
   } catch (err) {
+    console.error('🔍 getMe - Error:', err.message);
     res.status(500).json({ message: err.message });
   }
 };

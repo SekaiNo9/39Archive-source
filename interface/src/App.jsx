@@ -52,29 +52,35 @@ export default function App() {
       try {
         // Skip auto-fetch nếu đang ở trang login để tránh conflict
         const currentPath = window.location.pathname;
+        console.log('🔍 App.jsx - Current path:', currentPath);
         if (currentPath === '/login' || currentPath === '/register') {
+          console.log('🔍 App.jsx - Skipping auto-fetch for login/register page');
           setLoading(false);
           return;
         }
         
         setLoading(true);
+        console.log('🔍 App.jsx - Fetching user from:', `${process.env.REACT_APP_API_URL}/account/me`);
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/account/me`, {
           withCredentials: true
         });
         
         // Kiểm tra và log response để debug
-        console.log('✅ API response data:', res.data);
+        console.log('✅ App.jsx - API response data:', res.data);
+        console.log('✅ App.jsx - User account:', res.data.account);
         
         if (res.data && res.data.account) {
           // Tiêu chuẩn hóa user data cho toàn bộ ứng dụng
           // Lưu user trực tiếp là account object để dễ truy cập
           setUser(res.data.account);
+          console.log('✅ App.jsx - User set successfully:', res.data.account.login_name);
         } else {
-          console.warn('⚠️ Unexpected user data format:', res.data);
+          console.warn('⚠️ App.jsx - Unexpected user data format:', res.data);
           setUser(null);
         }
       } catch (err) {
-        console.error('❌ Error fetching user:', err);
+        console.error('❌ App.jsx - Error fetching user:', err);
+        console.error('❌ App.jsx - Error details:', err.response?.data);
         setUser(null);
       } finally {
         setLoading(false);
