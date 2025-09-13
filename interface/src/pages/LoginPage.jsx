@@ -24,11 +24,24 @@ export default function LoginPage({ setUser }) {
       // Clear user state trước khi login để tránh conflict
       setUser(null);
       
-      // Login
+      // Force logout trước khi login để clear cookie cũ hoàn toàn
+      try {
+        await axios.post(`${base}/account/logout`, {}, { withCredentials: true });
+      } catch (logoutErr) {
+        // Ignore logout errors, có thể đã logout rồi
+        console.log('Logout error (ignored):', logoutErr.message);
+      }
+      
+      // Login với session mới hoàn toàn
       await axios.post(`${base}/account/login`, form, { withCredentials: true });
 
       // Lấy user info ngay sau khi login
       const userRes = await axios.get(`${base}/account/me`, { withCredentials: true });
+      
+      // Debug: Log user data để kiểm tra
+      console.log('🔍 Login - User data received:', userRes.data);
+      console.log('🔍 Login - Account data:', userRes.data.account);
+      
       setUser(userRes.data);
 
       setToast("Đăng nhập thành công!");
