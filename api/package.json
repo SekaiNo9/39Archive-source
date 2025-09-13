@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
@@ -17,8 +18,7 @@
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1",
-    "multer": "^2.0.2",
-    "serverless-http": "^4.0.0"
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"

@@ -17,8 +17,8 @@ exports.getAllSongs = async (req, res) => {
       duration: song.duration || 0,
       url_cover: song.url_cover,
       url_song: song.url_song,
-      composers: song.composers.map(c => c.nick_name),
-      performers: song.performers.map(p => p.nick_name),
+      composers: song.composers.length > 0 ? song.composers.map(c => c.nick_name) : ['Unknown'],
+      performers: song.performers.length > 0 ? song.performers.map(p => p.nick_name) : ['Unknown'],
       views: song.views || 0,
       release_date: song.release_date,
     }));
@@ -55,8 +55,10 @@ exports.addSong = async (req, res) => {
   try {
     const { title, duration, description, composers, performers, language, release_date, mv_link } = req.body;
     const { uploadToCloudinary } = require('../utils/cloudinaryReal');
+    const AdmZip = require('adm-zip');
+    const path = require('path');
 
-    if (!title || !duration || !description || !composers || !performers || !language || !release_date || !mv_link) {
+    if (!title || !duration || !description || !language || !release_date || !mv_link) {
       return res.status(400).json({ message: 'Thiếu thông tin bắt buộc!' });
     }
 
@@ -64,14 +66,48 @@ exports.addSong = async (req, res) => {
       return res.status(400).json({ message: 'Thiếu file nhạc hoặc ảnh bìa!' });
     }
 
-    // Upload song lên Google Drive
-    const songResult = await uploadToCloudinary(req.files['url_song'][0], 'songs');
+    // Xử lý file song: kiểm tra phần mở rộng để quyết định giải nén hay không
+    let songFileToUpload = req.files['url_song'][0];
+    const songFileName = songFileToUpload.originalname;
+    const songFileExt = path.extname(songFileName).toLowerCase();
+
+    if (songFileExt === '.zip') {
+      // Giải nén file zip và lấy file âm thanh đầu tiên
+      try {
+        const zip = new AdmZip(songFileToUpload.buffer);
+        const zipEntries = zip.getEntries();
+        
+        // Tìm file âm thanh đầu tiên trong zip
+        const audioExtensions = ['.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg'];
+        const audioEntry = zipEntries.find(entry => 
+          audioExtensions.some(ext => entry.entryName.toLowerCase().endsWith(ext))
+        );
+        
+        if (!audioEntry) {
+          return res.status(400).json({ message: 'Không tìm thấy file âm thanh trong file zip!' });
+        }
+        
+        // Tạo object file giả từ buffer đã giải nén
+        songFileToUpload = {
+          buffer: audioEntry.getData(),
+          originalname: audioEntry.entryName,
+          mimetype: `audio/${path.extname(audioEntry.entryName).substring(1)}`
+        };
+      } catch (error) {
+        return res.status(400).json({ message: 'Lỗi giải nén file zip!', error: error.message });
+      }
+    }
+
+    // Upload song lên Cloudinary (file đã được giải nén nếu cần)
+    const songResult = await uploadToCloudinary(songFileToUpload, 'songs');
 
     // Upload cover lên Cloudinary  
     const coverResult = await uploadToCloudinary(req.files['url_cover'][0], 'covers');
     
-    const composersArray = Array.isArray(composers) ? composers : [composers];
-    const performersArray = Array.isArray(performers) ? performers : [performers];
+    // Xử lý composers và performers
+    // Nếu không có trong req.body (nghĩa là FE đã chọn "unknown"), lưu mảng rỗng
+    const composersArray = composers ? (Array.isArray(composers) ? composers.filter(c => c) : [composers]) : [];
+    const performersArray = performers ? (Array.isArray(performers) ? performers.filter(p => p) : [performers]) : [];
 
     const song = new Song({
       title,
@@ -98,19 +134,73 @@ exports.addSong = async (req, res) => {
 // Cập nhật bài hát
 exports.updateSong = async (req, res) => {
   try {
+    const { uploadToCloudinary } = require('../utils/cloudinaryReal');
+    const AdmZip = require('adm-zip');
+    const path = require('path');
+    
     const updateData = { ...req.body };
 
-    if (updateData.composers && !Array.isArray(updateData.composers)) {
-      updateData.composers = [updateData.composers];
+    // Xử lý arrays cho composers và performers
+    // Nếu không có trong request (FE chọn unknown), set về mảng rỗng
+    if (updateData.composers !== undefined) {
+      if (!Array.isArray(updateData.composers)) {
+        updateData.composers = updateData.composers ? [updateData.composers] : [];
+      }
     }
-    if (updateData.performers && !Array.isArray(updateData.performers)) {
-      updateData.performers = [updateData.performers];
+    if (updateData.performers !== undefined) {
+      if (!Array.isArray(updateData.performers)) {
+        updateData.performers = updateData.performers ? [updateData.performers] : [];
+      }
     }
 
-    const song = await Song.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    // Xử lý upload file cover mới nếu có
+    if (req.files?.url_cover) {
+      const coverResult = await uploadToCloudinary(req.files['url_cover'][0], 'covers');
+      updateData.url_cover = coverResult.secure_url;
+    }
+
+    // Xử lý upload file song mới nếu có
+    if (req.files?.url_song) {
+      let songFileToUpload = req.files['url_song'][0];
+      const songFileName = songFileToUpload.originalname;
+      const songFileExt = path.extname(songFileName).toLowerCase();
+
+      // Kiểm tra và giải nén file zip nếu cần
+      if (songFileExt === '.zip') {
+        try {
+          const zip = new AdmZip(songFileToUpload.buffer);
+          const zipEntries = zip.getEntries();
+          
+          const audioExtensions = ['.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg'];
+          const audioEntry = zipEntries.find(entry => 
+            audioExtensions.some(ext => entry.entryName.toLowerCase().endsWith(ext))
+          );
+          
+          if (!audioEntry) {
+            return res.status(400).json({ message: 'Không tìm thấy file âm thanh trong file zip!' });
+          }
+          
+          songFileToUpload = {
+            buffer: audioEntry.getData(),
+            originalname: audioEntry.entryName,
+            mimetype: `audio/${path.extname(audioEntry.entryName).substring(1)}`
+          };
+        } catch (error) {
+          return res.status(400).json({ message: 'Lỗi giải nén file zip!', error: error.message });
+        }
+      }
+
+      const songResult = await uploadToCloudinary(songFileToUpload, 'songs');
+      updateData.url_song = songResult.secure_url;
+    }
+
+    const song = await Song.findByIdAndUpdate(req.params.id, updateData, { new: true })
+      .populate('composers', 'nick_name')
+      .populate('performers', 'nick_name');
+      
     if (!song) return res.status(404).json({ message: 'Không tìm thấy bài hát để cập nhật!' });
 
-    res.status(200).json(song);
+    res.status(200).json({ success: true, data: song });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi cập nhật bài hát!', error: error.message });
   }

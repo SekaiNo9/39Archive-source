@@ -43,4 +43,51 @@ router.get('/test-cloudinary', async (req, res) => {
   }
 });
 
+const mongoose = require('mongoose');
+
+// Route test kết nối MongoDB
+router.get('/test-db', (req, res) => {
+  const state = mongoose.connection.readyState;
+  // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
+  let status = '';
+  switch (state) {
+    case 0:
+      status = 'disconnected';
+      break;
+    case 1:
+      status = 'connected';
+      break;
+    case 2:
+      status = 'connecting';
+      break;
+    case 3:
+      status = 'disconnecting';
+      break;
+    default:
+      status = 'unknown';
+  }
+  // Log toàn bộ thông tin kết nối mongoose
+  const conn = mongoose.connection;
+  const info = {
+    success: state === 1,
+    state,
+    status,
+    host: conn.host,
+    port: conn.port,
+    name: conn.name,
+    readyState: conn.readyState,
+    client: conn.client ? {
+      topology: conn.client.topology ? conn.client.topology.constructor.name : null,
+      s: conn.client.s ? conn.client.s : null
+    } : null,
+    error: conn.error ? conn.error.message : null,
+    errorStack: conn.error ? conn.error.stack : null,
+    _hasError: conn._hasError ? conn._hasError : null,
+    _closeCalled: conn._closeCalled,
+    _connectionString: conn._connectionString,
+    // Thêm các thông tin khác nếu cần
+  };
+  res.json(info);
+});
+
 module.exports = router;

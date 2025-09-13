@@ -27,13 +27,11 @@ const songSchema = new mongoose.Schema({
     },
     composers: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Composer',
-        required: true
+        ref: 'Composer'
     }],
     performers: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Performer',
-        required: true
+        ref: 'Performer'
     }],
     language: {
         type: String,
