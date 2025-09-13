@@ -52,8 +52,23 @@ const login = async (req, res) => {
     );
 
     console.log('🔍 Login - Token created for userId:', acc._id, 'role:', acc.role);
+    console.log('🔍 Login - Token payload:', { userId: acc._id, role: acc.role });
+    
+    // Decode token để verify
+    const decoded = jwt.decode(token);
+    console.log('🔍 Login - Token decoded check:', { userId: decoded.userId, role: decoded.role });
 
     // Gửi cookie HttpOnly mới
+    console.log('🔍 Login - Setting cookie with token for user:', acc.login_name);
+    console.log('🔍 Login - Cookie settings:', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30*24*60*60*1000,
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+    });
+    
     res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
