@@ -22,6 +22,13 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Sai tên đăng nhập hoặc mật khẩu' });
     }
 
+    // Clear cookie cũ trước khi set cookie mới
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
     // Tạo JWT
     const token = jwt.sign(
       { userId: acc._id, role: acc.role },
@@ -29,7 +36,7 @@ const login = async (req, res) => {
       { expiresIn: '30d' }
     );
 
-    // Gửi cookie HttpOnly
+    // Gửi cookie HttpOnly mới
     res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
@@ -365,12 +372,11 @@ const updatePassword = async (req, res) => {
 // Đăng xuất
 const logout = async (req, res) => {
   try {
-    // Xóa cookie bằng cách set lại với maxAge = 0
-    res.cookie('token', '', {
+    // Clear cookie bằng cách sử dụng clearCookie thay vì set maxAge = 0
+    res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0 // Hết hạn ngay lập tức
+      sameSite: 'lax'
     });
     
     res.json({ 
