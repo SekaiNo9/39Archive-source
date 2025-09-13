@@ -29,12 +29,19 @@ const login = async (req, res) => {
       sameSite: 'lax'
     });
 
+    // Debug: Log environment và cookie settings
+    console.log('🔍 Login - Environment:', process.env.NODE_ENV);
+    console.log('🔍 Login - Cookie secure:', process.env.NODE_ENV === 'production');
+    console.log('🔍 Login - User attempting:', login_name);
+
     // Tạo JWT
     const token = jwt.sign(
       { userId: acc._id, role: acc.role },
       process.env.JWT_SECRET || 'fallback-secret',
       { expiresIn: '30d' }
     );
+
+    console.log('🔍 Login - Token created for userId:', acc._id, 'role:', acc.role);
 
     // Gửi cookie HttpOnly mới
     res.cookie('token', token, {
