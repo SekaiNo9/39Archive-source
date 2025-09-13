@@ -22,11 +22,21 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Sai tên đăng nhập hoặc mật khẩu' });
     }
 
-    // Clear cookie cũ trước khi set cookie mới
+    // Clear cookie cũ trước khi set cookie mới - với tất cả possible paths
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
+    });
+    
+    // Clear cookie với domain nếu có
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
     });
 
     // Debug: Log environment và cookie settings
@@ -48,7 +58,9 @@ const login = async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         sameSite: 'lax',
-        maxAge: 30*24*60*60*1000 // 30 ngày
+        maxAge: 30*24*60*60*1000, // 30 ngày
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
     });
 
     res.json({
@@ -379,12 +391,23 @@ const updatePassword = async (req, res) => {
 // Đăng xuất
 const logout = async (req, res) => {
   try {
-    // Clear cookie bằng cách sử dụng clearCookie thay vì set maxAge = 0
+    // Clear cookie với tất cả possible configurations
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
     });
+    
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+    });
+    
+    console.log('🔍 Logout - Cookies cleared');
     
     res.json({ 
       message: 'Đăng xuất thành công' 
